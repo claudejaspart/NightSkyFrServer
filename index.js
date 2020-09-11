@@ -96,16 +96,16 @@ app.post('/addTelescope', upload.any('image'),  (req, response) =>
           } 
           else
           {
-            response.send('DB-INS-IM-NOK');
+            response.send('FAIL-IMAGE-DB-INS');
           }          
         });     
       });
 
-      response.send('DBOK');
+      response.send('SUCCESS-TELESCOPE-DB-INS');
     }
     else
     {
-      response.send('DB-INS-TEL-NOK');
+      response.send('FAIL-TELESCOPE-DB-INS');
     }
     
   });
