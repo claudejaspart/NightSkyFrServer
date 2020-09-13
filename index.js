@@ -111,6 +111,8 @@ app.post('/addTelescope', upload.any('image'),  (req, response) =>
   });
 })
 
+
+// récupère la liste des telescopes
 app.get('/telescopes', (req,response)=>
 {
   
@@ -119,13 +121,37 @@ app.get('/telescopes', (req,response)=>
   {
     if (!err)
     {
-      res.rows ? response.send(res.rows) : response.send("DBNODATA");
+      res.rows ? response.send(res.rows) : response.send("NOENTRY-TELESCOPE-DB-SELECT");
     }
     else
-      response.send("DBNOK");
+      response.send("FAIL-TELESCOPE-DB-SELECT");
   });  
 });
 
+
+// supprime un telescope et ses images
+app.delete('/delTelescopes/:id', (request,response)=>
+{
+  console.log(request.params.id);
+  response.send("SUCCESS-TELESCOPE-DB-DELETE");
+  
+  // // récupérer la liste des url des images
+  // let getImagesURL = `select path from images where id in (select image_id from telescope_has_images where telescope_id = 12);`
+  // client.query(getImagesURL, (err,res)=>
+  // {
+  //   if (!err)
+  //   {
+  //     console.log(res.rows);
+  //   }
+  //   else
+  //     response.send("FAIL-TELESCOPE-DB-DEL-SEL-IMAGES-URL");
+  // });  
+
+
+  // supprimer les images
+
+  // supprimer les données
+});
 
 
 
