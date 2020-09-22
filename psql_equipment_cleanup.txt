@@ -1,0 +1,27 @@
+select * from telescopes;
+select * from eyepieces;
+select * from binoculars;
+
+select * from telescope_has_images;
+select * from eyepiece_has_images;
+select * from binoculars_has_images;
+
+select * from images;
+
+
+/* cleanup */
+
+delete from telescopes;
+delete from eyepieces;
+delete from binoculars;
+delete from images;
+delete from telescope_has_images;
+delete from eyepiece_has_images;
+delete from binoculars_has_images;
+
+ALTER SEQUENCE telescopes_id_seq RESTART WITH 1;
+ALTER SEQUENCE eyepieces_id_seq RESTART WITH 1;
+ALTER SEQUENCE binoculars_id_seq RESTART WITH 1;
+ALTER SEQUENCE images_id_seq RESTART WITH 1;
+
+VSCode : rm -rf Images/ && mkdir Images/
