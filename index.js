@@ -8,6 +8,7 @@ const multer = require('multer');
 const { fileURLToPath } = require('url');
 const { sha512 } = require('js-sha512');
 const { Console } = require('console');
+const fs  = require('fs');
 
 const storage = multer.diskStorage(
   {
@@ -338,7 +339,7 @@ app.post('/addBinoculars', upload.any('image'),  (req, response) =>
 
 // ************************************************
 //
-//             RECUPERATION DES IMAGES
+//             RECUPERATION DES IMAGES EQUIPEMENTS
 //
 // ************************************************
 
@@ -362,5 +363,70 @@ app.get('/EquipmentImages', (request,response)=>
     else
       response.send("FAIL-DB-SELECT");
   });  
+});
+
+function checkImagesExistence()
+{
+  // todo
+}
+
+// ************************************************
+//
+//             SUPPRESSION DES IMAGES EQUIPEMENTS
+//
+// ************************************************
+app.delete('/DeleteAllEquipmentImages', (request, response)=>
+{
+  // suppression de toutes les images d'un equipement donné
+  let itemId = request.query.id;
+  let itemType = request.query.type;
+  console.log(itemId + " - " + itemType);
+  response.send("ok");
+});
+
+app.delete('/DeleteEquipmentImage', (request, response)=>
+{
   
+  // suppression d'une image spécifique 
+  let imageId = request.query.id;
+  let itemType = request.query.type;
+
+  // 1 recuperation chemin image
+  let getImagePath = `select path from images where id = ${imageId};`;
+  console.log(getImagePath);
+  client.query(getImagePath, (errGetImage,resGetImage)=>
+  {
+    if (!errGetImage)
+    {
+      // suppression du fichier image
+      const path = "./" + resGetImage.rows[0].path.replace(/\\/g, '/');
+      
+      fs.unlink(path, (errDelFile) => 
+      {
+          console.log("physical image file removed ...");
+          // suppression de la ligne dans la table de relation
+          let deleteRelationRow = `delete from ${itemType}_has_images where image_id=${imageId}`
+          client.query(deleteRelationRow, (errDelRelation,resDelRelation)=>
+          {
+            if (!errDelRelation)
+            {
+              console.log("image relation to item removed ...");
+              // suppression de la ligne dans la table des images
+              let deleteImageRow = `delete from images where id=${imageId}`;
+              client.query(deleteImageRow, (errDelImage,resDelImage)=>
+              {
+                if (!errDelImage)
+                {
+                  console.log("image row removed ...");
+                  response.send("SUCCESS-IMAGE-DEL");
+                }
+                else{response.send("FAIL-IMAGE-DEL");}
+              });
+            }
+            else {response.send("FAIL-IMAGE-RELATION-DEL");}
+          });          
+      });
+    }
+    else {response.send("FAIL-DB-SELECT");}
+  }); 
 });
