@@ -378,10 +378,37 @@ function checkImagesExistence()
 app.delete('/DeleteAllEquipmentImages', (request, response)=>
 {
   // suppression de toutes les images d'un equipement donné
-  let itemId = request.query.id;
+  let itemId = request.query.itemId;
   let itemType = request.query.type;
-  console.log(itemId + " - " + itemType);
-  response.send("ok");
+  
+  // recuperation des id et des chemins des images
+  let getImagesData = `select id, path from images where id in (select image_id from ${itemType}_has_images where ${itemType}_id=${itemId})`;
+  client.query(getImagesData, (errGetImagesData,resGetImagesData)=>
+  {
+    if (!errGetImagesData)
+    {
+      for( let index=0; index < resGetImagesData.rows.length; index++)
+      {
+              // suppression du fichier image
+              let path = "./" + resGetImagesData.rows[index].path.replace(/\\/g, '/');
+              let imageId = resGetImagesData.rows[index].id;           
+              
+              fs.unlink(path, () => 
+              {
+                  // suppression de la ligne dans la table de relation
+                  let deleteRelationRow = `delete from ${itemType}_has_images where image_id=${imageId}`
+                  client.query(deleteRelationRow);  
+                  
+                  // suppression de la ligne dans la table des images
+                  let deleteImageRow = `delete from images where id=${imageId}`;
+                  client.query(deleteImageRow);
+              });
+      }
+
+      response.send("SUCCESS-ALL-IMAGES-DEL");
+    }
+    else {response.send("FAIL-DB-SELECT");}
+  });
 });
 
 app.delete('/DeleteEquipmentImage', (request, response)=>
@@ -403,21 +430,18 @@ app.delete('/DeleteEquipmentImage', (request, response)=>
       
       fs.unlink(path, (errDelFile) => 
       {
-          console.log("physical image file removed ...");
           // suppression de la ligne dans la table de relation
           let deleteRelationRow = `delete from ${itemType}_has_images where image_id=${imageId}`
           client.query(deleteRelationRow, (errDelRelation,resDelRelation)=>
           {
             if (!errDelRelation)
             {
-              console.log("image relation to item removed ...");
               // suppression de la ligne dans la table des images
               let deleteImageRow = `delete from images where id=${imageId}`;
               client.query(deleteImageRow, (errDelImage,resDelImage)=>
               {
                 if (!errDelImage)
                 {
-                  console.log("image row removed ...");
                   response.send("SUCCESS-IMAGE-DEL");
                 }
                 else{response.send("FAIL-IMAGE-DEL");}
