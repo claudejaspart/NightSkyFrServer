@@ -420,7 +420,6 @@ app.delete('/DeleteEquipmentImage', (request, response)=>
 
   // 1 recuperation chemin image
   let getImagePath = `select path from images where id = ${imageId};`;
-  console.log(getImagePath);
   client.query(getImagePath, (errGetImage,resGetImage)=>
   {
     if (!errGetImage)
@@ -443,14 +442,54 @@ app.delete('/DeleteEquipmentImage', (request, response)=>
                 if (!errDelImage)
                 {
                   response.send("SUCCESS-IMAGE-DEL");
+                  return;
                 }
-                else{response.send("FAIL-IMAGE-DEL");}
+                else{response.send("FAIL-IMAGE-DEL");return;}
               });
             }
-            else {response.send("FAIL-IMAGE-RELATION-DEL");}
+            else {response.send("FAIL-IMAGE-RELATION-DEL");return;}
           });          
       });
     }
     else {response.send("FAIL-DB-SELECT");}
   }); 
 });
+
+// ************************************************
+//
+//             INSERTION D'UNE IMAGE EQUIPEMENTS
+//
+// ************************************************
+app.post('/addEquipmentImage', upload.any('image'),  (request, response) =>
+{
+  // récupération des données
+  let itemId = request.query.itemId;
+  let itemType = request.query.type;
+  let itemName = request.query.itemName;
+  
+  // Insertion des images
+  currentFile = request.files[0]; 
+
+  // sauvegarde données image en base
+  insertImage = `insert into images values (DEFAULT, '${currentFile.originalname}', '${currentFile.path}' ,  '${itemName}', '', '', CURRENT_TIMESTAMP, 1) RETURNING id;`;
+  client.query(insertImage, (errIm, resIm) => 
+  {
+    if (!errIm)
+    {
+      // recuperation id image
+      let imageIndex = resIm.rows[0].id;              
+
+      // insertion dans la table d'association
+      addImageToItem = `insert into ${itemType}_has_images values (${itemId}, ${imageIndex});`
+      client.query(addImageToItem, (errRel, resRel)=>
+      {
+        if(!errRel)
+          response.send('DB-INS-IMAGE-SUCCESS');
+        else
+          response.send('DB-INS-IMAGE-FAIL');     
+      }); 
+    }
+    else
+      response.send('DB-INS-IMAGE-FAIL');
+  });     
+})
