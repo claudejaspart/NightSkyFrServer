@@ -18,7 +18,7 @@ const storage = multer.diskStorage(
     },
     filename: function (req, file, cb) 
     {
-      cb(null, sha512(file.originalname) +  path.extname(file.originalname))
+      cb(null, sha512(file.originalname + Date.now()) +  path.extname(file.originalname))
     }
 });
 const upload=multer({storage:storage});
@@ -352,7 +352,6 @@ app.get('/EquipmentImages', (request,response)=>
   
   // récupération de la bonne requete
   let getImagesQuery = `select id, '${absoluteStaticPath}' || path as path, title, description, author from images where id in (select image_id from ${itemType}_has_images where ${itemType}_id=${itemId});`;
-
   // execution de la requete
   client.query(getImagesQuery, (err,res)=>
   {
