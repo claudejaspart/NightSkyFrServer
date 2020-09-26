@@ -7,7 +7,6 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const { fileURLToPath } = require('url');
 const { sha512 } = require('js-sha512');
-const { Console } = require('console');
 const fs  = require('fs');
 
 const storage = multer.diskStorage(
@@ -122,7 +121,6 @@ app.post('/addTelescope', upload.any('image'),  (req, response) =>
           } 
           else
           {
-            console.log(errIm);
             response.send('FAIL-IMAGE-DB-INS');
           }          
         });     
@@ -137,34 +135,6 @@ app.post('/addTelescope', upload.any('image'),  (req, response) =>
     
   });
 })
-
-
-// supprime un telescope et ses images
-app.delete('/delTelescopes/:id', (request,response)=>
-{
-  console.log(request.params.id);
-  response.send("SUCCESS-DB-DELETE");
-  
-  // // récupérer la liste des url des images
-  // let getImagesURL = `select path from images where id in (select image_id from telescope_has_images where telescope_id = 12);`
-  // client.query(getImagesURL, (err,res)=>
-  // {
-  //   if (!err)
-  //   {
-  //     console.log(res.rows);
-  //   }
-  //   else
-  //     response.send("FAIL-TELESCOPE-DB-DEL-SEL-IMAGES-URL");
-  // });  
-
-
-  // supprimer les images
-
-  // supprimer les données
-});
-
-
-
 
 
 // ************************************************
@@ -233,7 +203,6 @@ app.post('/addEyepiece', upload.any('image'),  (req, response) =>
           } 
           else
           {
-            console.log(errIm);
             response.send('FAIL-IMAGE-DB-INS');
           }          
         });     
@@ -291,7 +260,7 @@ app.post('/addBinoculars', upload.any('image'),  (req, response) =>
 
   // requete sql
   insertBinoculars = `insert into Binoculars values (DEFAULT, '${name}', '${diameter}', '${magnification}', '${afov}', '${manufacturer}', '${description}', 1 ) RETURNING id;`;
-  console.log(insertBinoculars);
+  
 
   client.query(insertBinoculars, 
   (errTel, resTel) => 
@@ -321,7 +290,6 @@ app.post('/addBinoculars', upload.any('image'),  (req, response) =>
           } 
           else
           {
-            console.log(errIm);
             response.send('FAIL-IMAGE-DB-INS');
           }          
         });     
@@ -336,6 +304,62 @@ app.post('/addBinoculars', upload.any('image'),  (req, response) =>
   });
 })
 
+// ************************************************
+//
+//             SUPPRIME UN EQUIPEMENT
+//
+// ************************************************
+app.delete('/deleteItem', (request,response)=>
+{
+  // récupération des parametres
+  let itemId = request.query.itemId;
+  let itemType = request.query.itemType;
+
+  // suppression des images (fichiers physiques, lignes et relations)
+  // recuperation des id et des chemins des images
+  let getImagesData = `select id, path from images where id in (select image_id from ${itemType}_has_images where ${itemType}_id=${itemId})`;
+  client.query(getImagesData, (errGetImagesData,resGetImagesData)=>
+  {
+    if (!errGetImagesData)
+    {
+      for( let index=0; index < resGetImagesData.rows.length; index++)
+      {
+          // suppression du fichier image
+          let path = "./" + resGetImagesData.rows[index].path.replace(/\\/g, '/');
+          let imageId = resGetImagesData.rows[index].id;           
+          
+          fs.unlink(path, () => 
+          {
+              // suppression de la ligne dans la table de relation
+              let deleteRelationRow = `delete from ${itemType}_has_images where image_id=${imageId}`
+              client.query(deleteRelationRow);  
+              
+              // suppression de la ligne dans la table des images
+              let deleteImageRow = `delete from images where id=${imageId}`;
+              client.query(deleteImageRow);
+          });
+      }
+      // suppression des lignes spécifiques équipements
+      let itemTypeName = itemType + (itemType !== 'binoculars' ? 's' : '');
+      let deleteItem = `delete from ${itemTypeName} where id=${itemId}`
+      client.query(deleteItem, (errDeleteItem, resDeleteItem)=>
+      {
+        if (!errDeleteItem)
+        {
+          response.send("ITEM-DB-DELETE-SUCCESS");
+        }
+        else
+        {
+          response.send("ITEM-DB-DELETE-FAIL");
+        }
+      });
+    }
+    else 
+    {
+      response.send("FAIL-DB-SELECT");
+    }
+  });
+});
 
 // ************************************************
 //
@@ -364,10 +388,8 @@ app.get('/EquipmentImages', (request,response)=>
   });  
 });
 
-function checkImagesExistence()
-{
-  // todo
-}
+
+
 
 // ************************************************
 //
@@ -379,7 +401,7 @@ app.delete('/DeleteAllEquipmentImages', (request, response)=>
   // suppression de toutes les images d'un equipement donné
   let itemId = request.query.itemId;
   let itemType = request.query.type;
-  
+
   // recuperation des id et des chemins des images
   let getImagesData = `select id, path from images where id in (select image_id from ${itemType}_has_images where ${itemType}_id=${itemId})`;
   client.query(getImagesData, (errGetImagesData,resGetImagesData)=>
@@ -403,10 +425,9 @@ app.delete('/DeleteAllEquipmentImages', (request, response)=>
                   client.query(deleteImageRow);
               });
       }
-
-      response.send("SUCCESS-ALL-IMAGES-DEL");
+      return "SUCCESS-ALL-IMAGES-DEL";
     }
-    else {response.send("FAIL-DB-SELECT");}
+    else {return"FAIL-DB-SELECT";}
   });
 });
 
@@ -452,7 +473,9 @@ app.delete('/DeleteEquipmentImage', (request, response)=>
     }
     else {response.send("FAIL-DB-SELECT");}
   }); 
+
 });
+
 
 // ************************************************
 //
