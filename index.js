@@ -306,6 +306,40 @@ app.post('/addBinoculars', upload.any('image'),  (req, response) =>
 
 // ************************************************
 //
+//             EDITER UN CHAMP D'EQUIPEMENT
+//
+// ************************************************
+app.post('/SaveEquipmentDataField',  (request, response) =>
+{
+  // récupération des données
+  itemType = request.body.itemType;
+  itemId = request.body.itemId;
+  fieldName = request.body.fieldName;
+  fieldValue = request.body.fieldValue;
+
+  // correction du nom du type
+  itemType = itemType + (itemType !== 'binoculars' ? 's' : '');
+
+  // variable insertion de single quote
+  singleQuote = "";
+  if (fieldName === 'description' || fieldName === 'name' || fieldName === 'manufacturer')
+    singleQuote = "'";
+  
+  // mise à jour de la valeur  
+  let updateFieldQuery = `update ${itemType} set ${fieldName} = ${singleQuote}${fieldValue}${singleQuote} where id = ${itemId};`
+  client.query(updateFieldQuery, (err,res)=>
+  {
+    if (!err)
+      response.send("EQUIPMENT-DB-UPDATE-SUCCESS");
+    else
+      response.send("EQUIPMENT-DB-UPDATE-FAIL");
+  }); 
+
+});
+
+
+// ************************************************
+//
 //             SUPPRIME UN EQUIPEMENT
 //
 // ************************************************
@@ -359,7 +393,7 @@ app.delete('/deleteItem', (request,response)=>
       response.send("FAIL-DB-SELECT");
     }
   });
-});
+})
 
 // ************************************************
 //
