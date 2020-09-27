@@ -177,7 +177,6 @@ app.post('/addEyepiece', upload.any('image'),  (req, response) =>
 
   // requete sql
   insertEyepiece = `insert into eyepieces values (DEFAULT, '${name}', '${focalLength}', '${afov}', '${manufacturer}', '${description}', 1 ) RETURNING id;`;
-  
   client.query(insertEyepiece, 
   (errTel, resTel) => 
   {
@@ -312,10 +311,10 @@ app.post('/addBinoculars', upload.any('image'),  (req, response) =>
 app.post('/SaveEquipmentDataField',  (request, response) =>
 {
   // récupération des données
-  itemType = request.body.itemType;
-  itemId = request.body.itemId;
-  fieldName = request.body.fieldName;
-  fieldValue = request.body.fieldValue;
+  let itemType = request.body.itemType;
+  let itemId = request.body.itemId;
+  let fieldName = request.body.fieldName;
+  let fieldValue = request.body.fieldValue;
 
   // correction du nom du type
   itemType = itemType + (itemType !== 'binoculars' ? 's' : '');
@@ -330,11 +329,12 @@ app.post('/SaveEquipmentDataField',  (request, response) =>
   client.query(updateFieldQuery, (err,res)=>
   {
     if (!err)
-      response.send("EQUIPMENT-DB-UPDATE-SUCCESS");
+       response.send("EQUIPMENT-DB-UPDATE-SUCCESS");
     else
+    {
       response.send("EQUIPMENT-DB-UPDATE-FAIL");
+    }
   }); 
-
 });
 
 
@@ -452,20 +452,39 @@ app.delete('/DeleteAllEquipmentImages', (request, response)=>
               {
                   // suppression de la ligne dans la table de relation
                   let deleteRelationRow = `delete from ${itemType}_has_images where image_id=${imageId}`
-                  client.query(deleteRelationRow);  
-                  
-                  // suppression de la ligne dans la table des images
-                  let deleteImageRow = `delete from images where id=${imageId}`;
-                  client.query(deleteImageRow);
+                  client.query(deleteRelationRow), (errDelRelation, resDelRelation)=>
+                  {
+                      if(!errDelRelation)
+                      {
+                        // suppression de la ligne dans la table des images
+                        let deleteImageRow = `delete from images where id=${imageId}`;
+                        client.query(deleteImageRow,(errDelRow, resDelRow)=>
+                        {
+                          if(!errDelRow)
+                          {
+                            res.send("IM-DB-DELETE-ALL-SUCCESS");
+                          }
+                          else
+                          {
+                            res.send("IM-DB-DELETE-ROW-FAIL");
+                          }
+                        });
+                      }
+                      else
+                      {
+                        res.send("IM-DB-DELETE-REL-FAIL");
+                      }
+                  };                  
+
               });
       }
-      return "SUCCESS-ALL-IMAGES-DEL";
+      response.send("SUCCESS-ALL-IMAGES-DEL");
     }
-    else {return"FAIL-DB-SELECT";}
+    else {response.send("FAIL-DB-SELECT");}
   });
 });
 
-app.delete('/DeleteEquipmentImage', (request, response)=>
+app.delete('/DeleteEquipmentImage', upload.any('image'),(request, response)=>
 {
   
   // suppression d'une image spécifique 
