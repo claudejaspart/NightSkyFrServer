@@ -1,14 +1,16 @@
 const express = require('express');
 const app = express();
+const { Client } = require('pg');
+
 const path = require('path');
-const { url } = require('inspector');
-const { Pool, Client } = require('pg');
 const bodyParser = require('body-parser');
-const multer = require('multer');
 const { fileURLToPath } = require('url');
 const { sha512 } = require('js-sha512');
 const fs  = require('fs');
+const telescopeRouter  = require('./Equipment/telescope');
 
+
+const multer = require('multer');
 const storage = multer.diskStorage(
   {
     destination: function (req, file, cb) 
@@ -24,13 +26,11 @@ const upload=multer({storage:storage});
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
-
 app.use(express.static(path.join(__dirname, '../../002 Frontend/001 NightSky Frontend/NightSkyFr/dist/NightSkyFr/')));
 app.use('/images', express.static('images'));
+app.use(telescopeRouter);
 
 // client postgres
-var data = ""
 const client = new Client({
   user: 'postgres',
   host: 'localhost',
@@ -57,84 +57,74 @@ app.listen(4201, function () {console.log('Example app listening on port 4201!')
 // ************************************************
 
 
-// récupère la liste des telescopes
-app.get('/telescopes', (req,response)=>
-{
-  getTelescopes = 'select * from telescopes;';
-  client.query(getTelescopes, (err,res)=>
-  {
-    if (!err)
-    {
-      res.rows ? response.send(res.rows) : response.send("NOENTRY-DB-SELECT");
-    }
-    else
-      response.send("FAIL-DB-SELECT");
-  });  
-});
 
-/* Ajout d'un telescope */
-app.post('/addTelescope', upload.any('image'),  (req, response) =>
-{
+
+
+
+
+// /* Ajout d'un telescope */
+// app.post('/addTelescope', upload.any('image'),  (req, response) =>
+// {
   
-  // récupération des données
-  // telescope
-  name = req.body.name;
-  diameter = req.body.diameter;
-  focalLength = req.body.focal;
-  fdratio = req.body.fdratio;
-  manufacturer = req.body.manufacturer;
-  description = req.body.description;
-  author = req.body.author;
+//   // récupération des données
+//   // telescope
+//   name = req.body.name;
+//   diameter = req.body.diameter;
+//   focalLength = req.body.focal;
+//   fdratio = req.body.fdratio;
+//   manufacturer = req.body.manufacturer;
+//   description = req.body.description;
+//   author = req.body.author;
 
-  // index des insertions
-  telescopeIndex = 0;
-  imageIndex = 0;
+//   // index des insertions
+//   telescopeIndex = 0;
+//   imageIndex = 0;
 
-  // requete sql
-  insertTelescope = `insert into telescopes values (DEFAULT, '${name}', '${diameter}', '${focalLength}', '${fdratio}', '${manufacturer}', '${description}', 1 ) RETURNING id;`;
+//   // requete sql
+//   insertTelescope = `insert into telescopes values (DEFAULT, '${name}', '${diameter}', '${focalLength}', '${fdratio}', '${manufacturer}', '${description}', 1 ) RETURNING id;`;
   
-  client.query(insertTelescope, 
-  (errTel, resTel) => 
-  {
-    if (!errTel)
-    {
-      // recuperation id telescope
-      telescopeIndex = resTel.rows[0].id;
+//   client.query(insertTelescope, 
+//   (errTel, resTel) => 
+//   {
+//     if (!errTel)
+//     {
+//       // recuperation id telescope
+//       telescopeIndex = resTel.rows[0].id;
 
-      // Insertion des images
-      req.files.forEach(currentFile => 
-      {
-         insertImages = `insert into images values (DEFAULT, '${currentFile.originalname}', '${currentFile.path}' ,  '${name}', '', '${author}', CURRENT_TIMESTAMP, 1) RETURNING id;`;
+//       // Insertion des images
+//       req.files.forEach(currentFile => 
+//       {
+//          insertImages = `insert into images values (DEFAULT, '${currentFile.originalname}', '${currentFile.path}' ,  '${name}', '', '${author}', CURRENT_TIMESTAMP, 1) RETURNING id;`;
          
          
-        // execution de la requete
-        client.query(insertImages, (errIm, resIm) => 
-        {
-          if (!errIm)
-          {
-              // recuperation id telescope
-              imageIndex = resIm.rows[0].id;              
+//         // execution de la requete
+//         client.query(insertImages, (errIm, resIm) => 
+//         {
+//           if (!errIm)
+//           {
+//               // recuperation id telescope
+//               imageIndex = resIm.rows[0].id;              
 
-              // insertion dans la table d'association
-              addImageToTelescope = `insert into telescope_has_images values (${telescopeIndex}, ${imageIndex});`
-              client.query(addImageToTelescope, (errIm, resIm) => {});
-          } 
-          else
-          {
-            response.send('FAIL-IMAGE-DB-INS');
-          }          
-        });     
-      });
+//               // insertion dans la table d'association
+//               addImageToTelescope = `insert into telescope_has_images values (${telescopeIndex}, ${imageIndex});`
+//               client.query(addImageToTelescope, (errIm, resIm) => {});
+//           } 
+//           else
+//           {
+//             response.send('FAIL-IMAGE-DB-INS');
+//           }          
+//         });     
+//       });
 
-      response.send('SUCCESS-DB-INS');
-    }
-    else
-    {
-      response.send('FAIL-DB-INS');
-    }
+//       response.send('SUCCESS-DB-INS');
+//     }
+//     else
+//     {
+//       response.send('FAIL-DB-INS');
+//     }
     
-  });
-})
+//   });
+// })
 
 
 // ************************************************
