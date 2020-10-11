@@ -7,7 +7,14 @@ const bodyParser = require('body-parser');
 const { fileURLToPath } = require('url');
 const { sha512 } = require('js-sha512');
 const fs  = require('fs');
+
+// imports api ws
 const telescopeRouter  = require('./Equipment/telescope');
+const eyepieceRouter  = require('./Equipment/eyepiece');
+
+// liste des apis
+app.use(telescopeRouter);
+app.use(eyepieceRouter);
 
 
 const multer = require('multer');
@@ -28,7 +35,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../NightSkyFr/dist/NightSkyFr/')));
 app.use('/images', express.static('images'));
-app.use(telescopeRouter);
+
+
 
 // client postgres
 const client = new Client({
@@ -50,81 +58,6 @@ app.listen(4201, function () {console.log('Example app listening on port 4201!')
 // API EQUIPEMENTS
 // ***************
 
-// ************************************************
-//
-//                    TELESCOPES
-//
-// ************************************************
-
-
-
-
-
-
-
-// /* Ajout d'un telescope */
-// app.post('/addTelescope', upload.any('image'),  (req, response) =>
-// {
-  
-//   // récupération des données
-//   // telescope
-//   name = req.body.name;
-//   diameter = req.body.diameter;
-//   focalLength = req.body.focal;
-//   fdratio = req.body.fdratio;
-//   manufacturer = req.body.manufacturer;
-//   description = req.body.description;
-//   author = req.body.author;
-
-//   // index des insertions
-//   telescopeIndex = 0;
-//   imageIndex = 0;
-
-//   // requete sql
-//   insertTelescope = `insert into telescopes values (DEFAULT, '${name}', '${diameter}', '${focalLength}', '${fdratio}', '${manufacturer}', '${description}', 1 ) RETURNING id;`;
-  
-//   client.query(insertTelescope, 
-//   (errTel, resTel) => 
-//   {
-//     if (!errTel)
-//     {
-//       // recuperation id telescope
-//       telescopeIndex = resTel.rows[0].id;
-
-//       // Insertion des images
-//       req.files.forEach(currentFile => 
-//       {
-//          insertImages = `insert into images values (DEFAULT, '${currentFile.originalname}', '${currentFile.path}' ,  '${name}', '', '${author}', CURRENT_TIMESTAMP, 1) RETURNING id;`;
-         
-         
-//         // execution de la requete
-//         client.query(insertImages, (errIm, resIm) => 
-//         {
-//           if (!errIm)
-//           {
-//               // recuperation id telescope
-//               imageIndex = resIm.rows[0].id;              
-
-//               // insertion dans la table d'association
-//               addImageToTelescope = `insert into telescope_has_images values (${telescopeIndex}, ${imageIndex});`
-//               client.query(addImageToTelescope, (errIm, resIm) => {});
-//           } 
-//           else
-//           {
-//             response.send('FAIL-IMAGE-DB-INS');
-//           }          
-//         });     
-//       });
-
-//       response.send('SUCCESS-DB-INS');
-//     }
-//     else
-//     {
-//       response.send('FAIL-DB-INS');
-//     }
-    
-//   });
-// })
 
 
 // ************************************************
@@ -133,78 +66,8 @@ app.listen(4201, function () {console.log('Example app listening on port 4201!')
 //
 // ************************************************
 
-// récupère la liste des oculaires
-app.get('/eyepieces', (req,response)=>
-{
-  getEyepieces = 'select * from eyepieces;';
-  client.query(getEyepieces, (err,res)=>
-  {
-    if (!err)
-    {
-      res.rows ? response.send(res.rows) : response.send("NOENTRY-DB-SELECT");
-    }
-    else
-      response.send("FAIL-DB-SELECT");
-  });  
-});
 
-/* Ajout d'un oculaire */
-app.post('/addEyepiece', upload.any('image'),  (req, response) =>
-{
-  
-  // récupération des données
-  // eyepiece
-  name = req.body.name;
-  focalLength = req.body.focal;
-  afov = req.body.afov;
-  manufacturer = req.body.manufacturer;
-  description = req.body.description;
-  author = req.body.author;
 
-  // index des insertions
-  eyepieceIndex = 0;
-  imageIndex = 0;
-
-  // requete sql
-  insertEyepiece = `insert into eyepieces values (DEFAULT, '${name}', '${focalLength}', '${afov}', '${manufacturer}', '${description}', 1 ) RETURNING id;`;
-  client.query(insertEyepiece, 
-  (errTel, resTel) => 
-  {
-    if (!errTel)
-    {
-      // recuperation id telescope
-      eyepieceIndex = resTel.rows[0].id;
-
-      // Insertion des images
-      req.files.forEach(currentFile => 
-      {
-        insertImages = `insert into images values (DEFAULT, '${currentFile.originalname}', '${currentFile.path}' ,  '${name}', '', '${author}', CURRENT_TIMESTAMP, 1) RETURNING id;`;
-        client.query(insertImages, (errIm, resIm) => 
-        {
-          if (!errIm)
-          {
-              // recuperation id telescope
-              imageIndex = resIm.rows[0].id;              
-
-              // insertion dans la table d'association
-              addImageToEyepiece = `insert into eyepiece_has_images values (${eyepieceIndex}, ${imageIndex});`
-              client.query(addImageToEyepiece, (errIm, resIm) => {});
-          } 
-          else
-          {
-            response.send('FAIL-IMAGE-DB-INS');
-          }          
-        });     
-      });
-
-      response.send('SUCCESS-DB-INS');
-    }
-    else
-    {
-      response.send('FAIL-DB-INS');
-    }
-  });
-})
 
 
 
