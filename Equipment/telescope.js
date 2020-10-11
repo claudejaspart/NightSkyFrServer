@@ -1,11 +1,8 @@
 const express = require('express');
 const telescopeRouter = express.Router();
-const database = require('./../Database/DatabaseConnection');
 const path = require('path');
-const bodyParser = require('body-parser');
-const { fileURLToPath } = require('url');
 const { sha512 } = require('js-sha512');
-const fs  = require('fs');
+const database = require('./../Database/DatabaseConnection');
 
 const multer = require('multer');
 const storage = multer.diskStorage(
@@ -21,6 +18,10 @@ const storage = multer.diskStorage(
 });
 const upload=multer({storage:storage});
 
+
+
+
+
 // récupère la liste des telescopes
 telescopeRouter.get('/telescopes', (error,response) =>
 {
@@ -31,6 +32,8 @@ telescopeRouter.get('/telescopes', (error,response) =>
             .then(data => {response.send(data)})
             .catch(error => {response.send(error)})
 });
+
+
 
 
 /* Ajout d'un telescope */
@@ -70,14 +73,17 @@ telescopeRouter.post('/addTelescope', upload.any('image'),  (req, response) =>
                     .then(  resInsIm =>
                     {
                         // recuperation id telescope
-                        imageIndex = resInsIm[0].id;        
+                        imageIndex = resInsIm[0].id;    
 
                         // insertion dans la table d'association
                         addImageToTelescope = `insert into telescope_has_images values (${telescopeIndex}, ${imageIndex});`
                         database
                             .dbQuery(addImageToTelescope)
-                            .then((data)=> response.send(data))
-                            .catch((error)=> response.send(error))
+                            .then((data)=> 
+                            {
+                              response.send("DB-NEW-TELESCOPE-SUCCESS")
+                            })
+                            .catch(error=> response.send(error))
                     })
                     .catch(error => response.send(error))
             });

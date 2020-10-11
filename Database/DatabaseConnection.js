@@ -7,7 +7,7 @@ const dbQuery = (this_query) =>
     {
         user: 'postgres',
         host: 'localhost',
-        database: 'NightSkyFrDB',
+        database: 'NIGHTSKYFR',
         password: 'emfadmin',
         port: 5432,
     });
@@ -19,10 +19,8 @@ const dbQuery = (this_query) =>
             dbQueryPromise = client.query(this_query)
                   .then(result=>{return new Promise( (resolve, reject)=>
                     {
-                        if (result.rows.length > 0)
-                            resolve(result.rows)
-                        else
-                            resolve("DB-QUERY-SUCCESS")
+                        resolve(result.rows)
+
                     })})
                   .catch(err => {return new Promise( (resolve, reject)=>{reject("DB_QUERY_FAIL")} )})
 

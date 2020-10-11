@@ -26,7 +26,7 @@ const upload=multer({storage:storage});
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, '../../002 Frontend/001 NightSky Frontend/NightSkyFr/dist/NightSkyFr/')));
+app.use(express.static(path.join(__dirname, '../NightSkyFr/dist/NightSkyFr/')));
 app.use('/images', express.static('images'));
 app.use(telescopeRouter);
 
@@ -34,7 +34,7 @@ app.use(telescopeRouter);
 const client = new Client({
   user: 'postgres',
   host: 'localhost',
-  database: 'NightSkyFrDB',
+  database: 'NIGHTSKYFR',
   password: 'emfadmin',
   port: 5432,
 });
@@ -396,7 +396,7 @@ app.get('/EquipmentImages', (request,response)=>
   // récupération type equipement et de son id
   let itemId = request.query.id;
   let itemType = request.query.type;
-  let absoluteStaticPath = "http:\\\\78.218.242.131:4201\\";
+  let absoluteStaticPath = "http:\\\\127.0.0.1:4201\\";
   
   // récupération de la bonne requete
   let getImagesQuery = `select id, '${absoluteStaticPath}' || path as path, title, description, author from images where id in (select image_id from ${itemType}_has_images where ${itemType}_id=${itemId});`;
