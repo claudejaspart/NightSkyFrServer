@@ -22,18 +22,18 @@ const upload=multer({storage:storage});
 
 
 // récupère la liste des jumelles
-eyepieceRouter.get('/binoculars', (error,response) =>
+binocularsRouter.get('/binoculars', (error,response) =>
 {
-        geteyepieces = 'select * from binoculars;';
+        getBinoculars = 'select * from binoculars;';
 
         database
-            .dbQuery(geteyepieces)
+            .dbQuery(getBinoculars)
             .then(data => {response.send(data)})
             .catch(error => {response.send(error)})
 });
 
 /* Ajout d'une paire de jumelles */
-jumelleRouter.post('/addBinoculars', upload.any('image'),  (req, response) =>
+binocularsRouter.post('/addBinoculars', upload.any('image'),  (req, response) =>
 {
   // récupération des données
   // Binoculars
@@ -56,7 +56,7 @@ jumelleRouter.post('/addBinoculars', upload.any('image'),  (req, response) =>
     .then(  resInsBinoculars => 
         {
             // recuperation id jumelle
-            jumelleIndex = resInsBinoculars[0].id;
+            binocularsIndex = resInsBinoculars[0].id;
             
             // Insertion des images
             req.files.forEach(currentFile => 
