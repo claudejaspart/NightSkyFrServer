@@ -123,7 +123,7 @@ equipmentRouter.get('/EquipmentImages', (request,response)=>
   // récupération type equipement et de son id
   let itemId = request.query.id;
   let itemType = request.query.type;
-  let absoluteStaticPath = "http:\\\\127.0.0.1:4201\\";
+  let absoluteStaticPath = "http:\\\\78.218.242.131:4201\\";
   
   // récupération de la bonne requete
   let getImagesQuery = `select id, '${absoluteStaticPath}' || path as path, title, description, author from images where id in (select image_id from ${itemType}_has_images where ${itemType}_id=${itemId});`;
@@ -134,4 +134,145 @@ equipmentRouter.get('/EquipmentImages', (request,response)=>
 });
 
 
+// ************************************************
+//
+//             INSERTION D'UNE IMAGE EQUIPEMENT
+//
+// ************************************************
+equipmentRouter.post('/addEquipmentImage', upload.any('image'),  (request, response) =>
+{
+  // récupération des données
+  let itemId = request.query.itemId;
+  let itemType = request.query.type;
+  let itemName = request.query.itemName;
+  
+  // Insertion des images
+  currentFile = request.files[0]; 
+
+  // sauvegarde données image en base
+  insertImage = `insert into images values (DEFAULT, '${currentFile.originalname}', '${currentFile.path}' ,  '${itemName}', '', '', CURRENT_TIMESTAMP, 1) RETURNING id;`;
+  database.dbQuery(insertImage)
+          .then((resIm) => 
+                  {
+
+                      // recuperation id image
+                      let imageIndex = resIm[0].id;              
+
+                      // insertion dans la table d'association
+                      addImageToItem = `insert into ${itemType}_has_images values (${itemId}, ${imageIndex});`
+                      database.dbQuery(addImageToItem)
+                              .then(()=>response.send('DB-INS-IMAGE-SUCCESS'))
+                              .catch(()=> response.send('DB-INS-IMAGE-FAIL'))
+                    })
+          .catch(()=>response.send('DB-INS-IMAGE-FAIL'))
+})
+
+
+
+// ************************************************
+//
+//        SUPPRESSION D'UNE IMAGE EQUIPEMENT
+//
+// ************************************************
+equipmentRouter.delete('/DeleteEquipmentImage', upload.any('image'),(request, response)=>
+{
+  
+  // suppression d'une image spécifique 
+  let imageId = request.query.id;
+  let itemType = request.query.type;
+
+  // 1 recuperation chemin image
+  let getImagePath = `select path from images where id = ${imageId};`;
+  database.dbQuery(getImagePath)
+          .then( (resGetImage) =>
+          {
+              // suppression du fichier image
+              const path = "./" + resGetImage[0].path.replace(/\\/g, '/');
+
+              fs.unlink(path, () => 
+                {
+                    // suppression de la ligne dans la table de relation
+                    let deleteRelationRow = `delete from ${itemType}_has_images where image_id=${imageId}`
+
+                    database.dbQuery(deleteRelationRow)
+                            .then(()=>
+                            {
+                                // suppression de la ligne dans la table des images
+                                let deleteImageRow = `delete from images where id=${imageId}`;
+                                database.dbQuery(deleteImageRow)
+                                        .then(()=>response.send("SUCCESS-IMAGE-DEL"))
+                                        .catch(()=>response.send("FAIL-IMAGE-DEL"))
+                            })
+                            .catch(()=>response.send("FAIL-IMAGE-RELATION-DEL"))
+                });
+          })
+          .catch(()=>response.send("FAIL-DB-SELECT"))
+});
+
+
+
+// ************************************************
+//
+//             SUPPRESSION DES IMAGES EQUIPEMENTS
+//
+// ************************************************
+equipmentRouter.delete('/DeleteAllEquipmentImages', (request, response)=>
+{
+  // suppression de toutes les images d'un equipement donné
+  let itemId = request.query.itemId;
+  let itemType = request.query.type;
+  let error = false;
+
+  // recuperation des id et des chemins des images
+  let getImagesData = `select id, path from images where id in (select image_id from ${itemType}_has_images where ${itemType}_id=${itemId})`;
+  database.dbQuery(getImagesData)
+          .then((resGetImagesData)=>
+            {
+                for( let index=0; index < resGetImagesData.length; index++)
+                {
+                        // suppression du fichier image
+                        let path = "./" + resGetImagesData[index].path.replace(/\\/g, '/');
+                        let imageId = resGetImagesData[index].id;           
+                        
+                        fs.unlink(path, () => 
+                        {
+                            // suppression de la ligne dans la table de relation
+                            let deleteRelationRow = `delete from ${itemType}_has_images where image_id=${imageId}`
+                            database.dbQuery(deleteRelationRow)
+                                  .then(()=>
+                                    {
+                                        // suppression de la ligne dans la table des images
+                                        let deleteImageRow = `delete from images where id=${imageId}`;
+
+                                        database.dbQuery(deleteImageRow)
+                                                .then(()=>
+                                                  {
+                                                    if ((index === resGetImagesData.length - 1))
+                                                    {
+                                                      if (!error)
+                                                        response.send("IM-DB-DELETE-ALL-SUCCESS")
+                                                      else
+                                                        response.send("IM-DB-DELETE-ALL-FAIL")
+                                                    }      
+                                                  })
+                                                .catch(()=>
+                                                {
+                                                  error = true;
+
+                                                  if (index === resGetImagesData.length - 1)
+                                                    response.send("IM-DB-DELETE-ROW-FAIL");
+                                                    
+                                                })
+                                    })
+                                  .catch(()=>error = true)
+                        });
+                }
+
+            })
+          .catch(()=>response.send("FAIL-DB-SELECT"))
+
+});
+
+
 module.exports = equipmentRouter
+

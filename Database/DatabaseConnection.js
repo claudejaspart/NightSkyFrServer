@@ -7,7 +7,7 @@ const dbQuery = (this_query) =>
     {
         user: 'postgres',
         host: 'localhost',
-        database: 'NIGHTSKYFR',
+        database: 'NightSkyFrDB',
         password: 'emfadmin',
         port: 5432,
     });
