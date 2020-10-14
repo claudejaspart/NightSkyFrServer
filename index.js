@@ -3,7 +3,7 @@ const app = express();
 const path = require('path');
 
 
-// // liste des apis equipements
+// liste des apis equipements
 const telescopeRouter  = require('./Equipment/telescope');
 const eyepieceRouter  = require('./Equipment/eyepiece');
 const binocularsRouter  = require('./Equipment/binoculars');
@@ -13,6 +13,10 @@ app.use(telescopeRouter);
 app.use(eyepieceRouter);
 app.use(binocularsRouter);
 app.use(equipmentRouter);
+
+// liste des apis sites
+const newSiteRouter  = require('./Sites/new-site');
+app.use(newSiteRouter);
 
 
 app.use(express.static(path.join(__dirname, '../../002 Frontend/001 NightSky Frontend/NightSkyFr/dist/NightSkyFr/')));
