@@ -162,7 +162,7 @@ equipmentRouter.post('/addEquipmentImage', upload.any('image'),  (request, respo
                       addImageToItem = `insert into ${itemType}_has_images values (${itemId}, ${imageIndex});`
                       database.dbQuery(addImageToItem)
                               .then(()=>response.send('DB-INS-IMAGE-SUCCESS'))
-                              .catch(()=> response.send('DB-INS-IMAGE-FAIL'))
+                              .catch(()=> response.send('DB-INS-IMAGE-RELATION-FAIL'))
                     })
           .catch(()=>response.send('DB-INS-IMAGE-FAIL'))
 })

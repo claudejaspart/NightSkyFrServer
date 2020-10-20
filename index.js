@@ -18,9 +18,11 @@ app.use(equipmentRouter);
 const newSiteRouter  = require('./Sites/new-site');
 const listSitesRouter = require('./Sites/list-site');
 const deleteSiteRouter  = require('./Sites/delete-site');
+const editSiteRouter  = require('./Sites/edit-site');
 app.use(newSiteRouter);
 app.use(listSitesRouter);
 app.use(deleteSiteRouter);
+app.use(editSiteRouter);
 
 
 app.use(express.static(path.join(__dirname, '../../002 Frontend/001 NightSky Frontend/NightSkyFr/dist/NightSkyFr/')));
