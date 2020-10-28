@@ -16,6 +16,7 @@ const dbQuery = (this_query) =>
         .connect()
         .then(  () => 
         { 
+            //console.log(this_query);
             dbQueryPromise = client.query(this_query)
                   .then(result=>{return new Promise( (resolve, reject)=>
                     {
