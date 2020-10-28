@@ -29,6 +29,10 @@ const obsListsRouter  = require('./ObservationLists/observationLists');
 app.use(obsListsRouter);
 const newObservationListRouter  = require('./ObservationLists/new-observationLists');
 app.use(newObservationListRouter);
+const observationListDetails  = require('./ObservationLists/details-observation-list');
+app.use(observationListDetails);
+const initObservationLists  = require('./ObservationLists/init-observation-lists');
+app.use(initObservationLists);
 
 
 app.use(express.static(path.join(__dirname, '../../002 Frontend/001 NightSky Frontend/NightSkyFr/dist/NightSkyFr/')));

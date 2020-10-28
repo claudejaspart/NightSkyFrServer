@@ -20,17 +20,21 @@ const dbQuery = (this_query) =>
             dbQueryPromise = client.query(this_query)
                   .then(result=>{return new Promise( (resolve, reject)=>
                     {
-                        resolve(result.rows)
+                        client.end();
+                        resolve(result.rows);
 
                     })})
                   .catch(err => {return new Promise( (resolve, reject)=>{reject("DB_QUERY_FAIL")} )})
 
             return dbQueryPromise;
+            
                   
         })
         .catch( err => {return new Promise( (resolve, reject)=>{reject("DB_CONNECTION_FAIL")} )})
 
+
     return dbPromise;
+
 }
 
 
